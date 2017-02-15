@@ -9,6 +9,10 @@ function [xyz] = denormalize(i,j,k, map)
 % i = 10;
 % j = 5;
 % k = 3;
+%subtracting 1 
+i = i + 1 ; 
+j = j + 1;
+k = k + 1;
 
 %de -normalizing 
 x_points = i*map.xy_res;

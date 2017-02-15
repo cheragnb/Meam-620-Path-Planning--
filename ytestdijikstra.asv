@@ -1,0 +1,158 @@
+
+% https://en.wikipedia.org/wiki/Dijkstra's_algorithm
+clc;
+% changing this might not affect much
+map = MAP.map_val;
+start = [1 1 1] ;
+goal  = [4 4 1];
+i = start(1)/MAP.xy_res;
+j = start(2)/MAP.xy_res;
+k = start(3)/MAP.z_res;
+
+numexpanded = 0;
+
+[l,b,h] = size(map);
+% node list
+R = (1:l*b*h);
+P = (~map(:))';
+Q = R.*P; 
+%dist and prev list
+dist = ones(1,l*b*h)*inf;
+disthist = ones(1,l*b*h)*inf;
+
+prev = ones(1,l*b*h)*-1;
+prev(1) = 0;
+
+u = sub2ind(size(map),i,j,k);
+dist(u)  = 0;
+
+
+while(any(Q~=0))
+%     Q
+%     disthist
+%     dist
+%     prev
+%     
+    [~,u] = min(dist);
+%    u
+    Q(u) = [0];
+    [i j k] = ind2sub(size(map),u);
+    numexpanded = numexpanded + 1;
+    if [i j k] == goal
+        break 
+    end
+ 
+    %look down %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    i_check = i+1;   j_check= j;    k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        %'here 1'
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            %   'here 2'
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                %'here 3'
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking down');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    %%%%%%%%%%look right%%%%%%%
+    i_check = i;   j_check=j+1; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking right');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    
+        %%%%%%%%%%look right%%%%%%%
+    i_check = i;   j_check=j-1; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking left');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+        %%%%%%%%%%look right%%%%%%%
+    i_check = i-1;   j_check=j; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking up');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    
+    
+    
+    disp('______________________');
+    dist(u) = inf;
+end
+
+
+%Constructing path 
+
+goal_ind = sub2ind(size(map),goal(1), goal(2), goal(3));
+path = ones(1,l*b*h)*0;
+index = 0;
+while(prev(u) ~= 0)
+    u = prev(u);    
+    path(end-index) = u;
+    index = index + 1;
+end
+path(u) = u;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%end
+% if nargin < 4;
+%     astar = false;
+% end
+% path = [];
+% num_expanded = 0;
+

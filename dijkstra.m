@@ -16,9 +16,9 @@ function [path, num_expanded] = dijkstra(map, start, goal, astar)
 %%
 % https://en.wikipedia.org/wiki/Dijkstra's_algorithm
 clc;
-% changing this might not affect much 
+% changing this might not affect much
 map = MAP.map_val;
-start = [1 1 1] ;   
+start = [1 1 1] ;
 i = start(1)/MAP.xy_res;
 j = start(2)/MAP.xy_res;
 k = start(3)/MAP.z_res;
@@ -27,43 +27,41 @@ k = start(3)/MAP.z_res;
 % node list
 Q = (1:l*b*h);
 %dist and prev list
-dist =  ones(1,l*b*h)*inf;
+dist = ones(1,l*b*h)*inf;
+prev = ones(1,l*b*h)*-1;
 
-indice = sub2ind(size(map),i,j,k);
-dist(indice)  = 0;
+v = sub2ind(size(map),i,j,k);
+dist(v)  = 0;
 
- while(Q)
-     [min_val , u] = min(dist);
-     Q(u) = [];
-     %look right
-     i = i;   j=j+1;
-     xyz = denormalize(i,j,k,MAP);
+while(Q)
+    Q;
+    [~,u] = min(dist);
+    Q(u) = [];
+    %look down %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    i = i+1;   j=j;
      %check for collision, %collide = 0 no obs, 1 obs
-     if( collide(MAP,xyz) == 0)
+    if( norm_collide(MAP,[i j k]) == 0)
+        %'here 1'
+        v = sub2ind(size(map),i,j,k);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        presence = find(Q == v);
+        if(~ isempty(presence))
+         %   'here 2'
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                %'here 3'
          
-        '_______'
-        collide(MAP,xyz);
-        i;
-         j;
-         k;
-         v = sub2ind(size(map),i,j,k);
-         %check if element already visited, find = 0, Q not in list,already
-         %done, dont test 
-         if(find(Q == indice) ~= 0)
-             alt = dist(u) + 1;
-             if (alt < dist(v))
-                 dist(v) = alt;
-                 prev(v) = u;
-             end           
-                
-     end
-      
-     end
- end
-%%
-if nargin < 4;
-    astar = false;
-end
-path = [];
-num_expanded = 0;
+                dist(v) = alt;
+                prev(v) = u;
+            end
+        end
+    end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%end
+% if nargin < 4;
+%     astar = false;
+% end
+% path = [];
+% num_expanded = 0;
 end

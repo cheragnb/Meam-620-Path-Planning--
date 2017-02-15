@@ -1,0 +1,448 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>ytestdijikstra</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-02-15"><meta name="DC.source" content="ytestdijikstra.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% https://en.wikipedia.org/wiki/Dijkstra's_algorithm</span>
+clc;
+<span class="comment">% changing this might not affect much</span>
+map = MAP.map_val;
+start = [2 3 1] ;
+goal  = [4 4 1];
+i = start(1)/MAP.xy_res;
+j = start(2)/MAP.xy_res;
+k = start(3)/MAP.z_res;
+
+numexpanded = 0;
+
+[l,b,h] = size(map);
+<span class="comment">% node list</span>
+R = (1:l*b*h);
+P = (~map(:))';
+Q = R.*P;
+<span class="comment">%dist and prev list</span>
+dist = ones(1,l*b*h)*inf;
+disthist = ones(1,l*b*h)*inf;
+
+prev = ones(1,l*b*h)*-1;
+prev(1) = 0;
+
+start_ind = sub2ind(size(map),i,j,k);
+u = start_ind;
+dist(u)  = 0;
+
+
+<span class="keyword">while</span>(any(Q~=0))
+<span class="comment">%     Q</span>
+<span class="comment">%     disthist</span>
+<span class="comment">%     dist</span>
+<span class="comment">%     prev</span>
+<span class="comment">%</span>
+    [~,u] = min(dist);
+<span class="comment">%    u</span>
+    Q(u) = [0];
+    [i j k] = ind2sub(size(map),u);
+    numexpanded = numexpanded + 1;
+    <span class="keyword">if</span> [i j k] == goal
+        <span class="keyword">break</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%look down %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+    i_check = i+1;   j_check= j;    k_check = k;
+    <span class="comment">%check for collision, %collide = 0 no obs, 1 obs</span>
+    <span class="keyword">if</span>( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        <span class="comment">%'here 1'</span>
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        <span class="comment">%check if element already visited, find = 0, Q not in list,already</span>
+        <span class="comment">%done, dont test</span>
+        inQ = find(Q == v);
+        <span class="keyword">if</span>(~ isempty(inQ))
+            <span class="comment">%   'here 2'</span>
+            alt = dist(u) + 1;
+            <span class="keyword">if</span> (alt &lt; dist(v))
+                <span class="comment">%'here 3'</span>
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp(<span class="string">'looking down'</span>);
+                disp(u);
+                disp(v);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%%%%%%%%%%look right%%%%%%%</span>
+    i_check = i;   j_check=j+1; k_check = k;
+    <span class="comment">%check for collision, %collide = 0 no obs, 1 obs</span>
+    <span class="keyword">if</span>( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        <span class="comment">%check if element already visited, find = 0, Q not in list,already</span>
+        <span class="comment">%done, dont test</span>
+        inQ = find(Q == v);
+        <span class="keyword">if</span>(~ isempty(inQ))
+            alt = dist(u) + 1;
+            <span class="keyword">if</span> (alt &lt; dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp(<span class="string">'looking right'</span>);
+                disp(u);
+                disp(v);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+        <span class="comment">%%%%%%%%%%look right%%%%%%%</span>
+    i_check = i;   j_check=j-1; k_check = k;
+    <span class="comment">%check for collision, %collide = 0 no obs, 1 obs</span>
+    <span class="keyword">if</span>( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        <span class="comment">%check if element already visited, find = 0, Q not in list,already</span>
+        <span class="comment">%done, dont test</span>
+        inQ = find(Q == v);
+        <span class="keyword">if</span>(~ isempty(inQ))
+            alt = dist(u) + 1;
+            <span class="keyword">if</span> (alt &lt; dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp(<span class="string">'looking left'</span>);
+                disp(u);
+                disp(v);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+        <span class="comment">%%%%%%%%%%look right%%%%%%%</span>
+    i_check = i-1;   j_check=j; k_check = k;
+    <span class="comment">%check for collision, %collide = 0 no obs, 1 obs</span>
+    <span class="keyword">if</span>( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        <span class="comment">%check if element already visited, find = 0, Q not in list,already</span>
+        <span class="comment">%done, dont test</span>
+        inQ = find(Q == v);
+        <span class="keyword">if</span>(~ isempty(inQ))
+            alt = dist(u) + 1;
+            <span class="keyword">if</span> (alt &lt; dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp(<span class="string">'looking up'</span>);
+                disp(u);
+                disp(v);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+
+    disp(<span class="string">'______________________'</span>);
+    dist(u) = inf;
+<span class="keyword">end</span>
+
+<span class="comment">%Constructing path</span>
+
+goal_ind = sub2ind(size(map),goal(1), goal(2), goal(3));
+path = ones(1,l*b*h)*0;
+path(end)= goal_ind;
+index = 1;
+
+<span class="keyword">while</span>(u ~= start_ind)
+    u = prev(u) ;
+    path(end-index) = u;
+    index = index + 1;
+
+<span class="keyword">end</span>
+
+path(path == 0) = []
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%end</span>
+<span class="comment">% if nargin &lt; 4;</span>
+<span class="comment">%     astar = false;</span>
+<span class="comment">% end</span>
+<span class="comment">% path = [];</span>
+<span class="comment">% num_expanded = 0;</span>
+</pre><pre class="codeoutput">looking down
+    10
+
+    11
+
+looking right
+    10
+
+    14
+
+______________________
+looking down
+    11
+
+    12
+
+looking right
+    11
+
+    15
+
+looking left
+    11
+
+     7
+
+______________________
+looking up
+    14
+
+    13
+
+______________________
+looking left
+     7
+
+     3
+
+______________________
+looking right
+    12
+
+    16
+
+______________________
+______________________
+______________________
+looking up
+     3
+
+     2
+
+______________________
+
+path =
+
+    10    11    12    16
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% https://en.wikipedia.org/wiki/Dijkstra's_algorithm
+clc;
+% changing this might not affect much
+map = MAP.map_val;
+start = [2 3 1] ;
+goal  = [4 4 1];
+i = start(1)/MAP.xy_res;
+j = start(2)/MAP.xy_res;
+k = start(3)/MAP.z_res;
+
+numexpanded = 0;
+
+[l,b,h] = size(map);
+% node list
+R = (1:l*b*h);
+P = (~map(:))';
+Q = R.*P; 
+%dist and prev list
+dist = ones(1,l*b*h)*inf;
+disthist = ones(1,l*b*h)*inf;
+
+prev = ones(1,l*b*h)*-1;
+prev(1) = 0;
+
+start_ind = sub2ind(size(map),i,j,k);
+u = start_ind;
+dist(u)  = 0;
+
+
+while(any(Q~=0))
+%     Q
+%     disthist
+%     dist
+%     prev
+%     
+    [~,u] = min(dist);
+%    u
+    Q(u) = [0];
+    [i j k] = ind2sub(size(map),u);
+    numexpanded = numexpanded + 1;
+    if [i j k] == goal
+        break 
+    end
+ 
+    %look down %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    i_check = i+1;   j_check= j;    k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        %'here 1'
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            %   'here 2'
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                %'here 3'
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking down');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    %%%%%%%%%%look right%%%%%%%
+    i_check = i;   j_check=j+1; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking right');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    
+        %%%%%%%%%%look right%%%%%%%
+    i_check = i;   j_check=j-1; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking left');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+        %%%%%%%%%%look right%%%%%%%
+    i_check = i-1;   j_check=j; k_check = k;
+    %check for collision, %collide = 0 no obs, 1 obs
+    if( norm_collide(MAP,[i_check j_check k_check]) == 0)
+        v = sub2ind(size(map),i_check,j_check,k_check);
+        %check if element already visited, find = 0, Q not in list,already
+        %done, dont test
+        inQ = find(Q == v);
+        if(~ isempty(inQ))
+            alt = dist(u) + 1;
+            if (alt < dist(v))
+                dist(v) = alt;
+                prev(v) = u;
+                disthist(v) = alt;
+                disp('looking up');
+                disp(u);
+                disp(v);
+            end
+        end
+    end
+    
+    
+    
+    disp('______________________');
+    dist(u) = inf;
+end
+
+%Constructing path 
+
+goal_ind = sub2ind(size(map),goal(1), goal(2), goal(3));
+path = ones(1,l*b*h)*0;
+path(end)= goal_ind;
+index = 1;
+
+while(u ~= start_ind)
+    u = prev(u) ;
+    path(end-index) = u;
+    index = index + 1;
+    
+end
+
+path(path == 0) = []
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%end
+% if nargin < 4;
+%     astar = false;
+% end
+% path = [];
+% num_expanded = 0;
+
+
+##### SOURCE END #####
+--></body></html>
